@@ -1,0 +1,107 @@
+fontSize = 16;
+
+% Read in a color demo image.
+folder = fileparts(which('cameraman.tif')); % Determine where demo folder is (works with all versions).
+baseFileName = 'newuntitled.jpg';% name of the image u want to scramble
+% Get the full filename, with path prepended.
+fullFileName = fullfile(folder, baseFileName);
+if ~exist(fullFileName, 'file')
+	% Didn't find it there.  Check the search path for it.
+	fullFileName = baseFileName; % No path this time.
+	if ~exist(fullFileName, 'file')
+		% Still didn't find it.  Alert user.
+		errorMessage = sprintf('Error: %s does not exist.', fullFileName);
+		uiwait(warndlg(errorMessage));
+		return;
+	end
+end
+rgbImage = imread(fullFileName);
+% Get the dimensions of the image.  numberOfColorBands should be = 3.
+[rows, columns, numberOfColorBands] = size(rgbImage);
+save('info2','rows','columns');
+% Display the original color image.
+%subplot(2, 2, 1);
+%imshow(rgbImage);
+%title('Original Color Image', 'FontSize', fontSize);
+% Enlarge figure to full screen.
+%set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+
+% Get the order to scramble them in 
+scrambleOrder = randperm(rows*columns);
+save('info','scrambleOrder')
+% Extract the individual red, green, and blue color channels.
+redChannel = rgbImage(:, :, 1);
+greenChannel = rgbImage(:, :, 2);
+blueChannel = rgbImage(:, :, 3);
+
+
+% Scramble according to the scrambling order.
+redChannel = redChannel(scrambleOrder);
+greenChannel = greenChannel(scrambleOrder);
+blueChannel = blueChannel(scrambleOrder);
+
+% Reshape into a 2D image
+redChannel = reshape(redChannel, [rows, columns]);
+greenChannel = reshape(greenChannel, [rows, columns]);
+blueChannel = reshape(blueChannel, [rows, columns]);
+
+% Recombine separate color channels into a single, true color RGB image.
+scrambledImage = cat(3, redChannel, greenChannel, blueChannel);
+
+% Display the scrambled color image.
+h=figure;
+imshow(scrambledImage);
+saveas(h,'scramble.jpg');
+close all;
+
+disp(' ');
+disp(' ***** IMAGE HIDER*****');
+disp('___PROGRAM FOR HIDING ONE IMAGE INSIDE THE OTHER IMAGE___');
+disp(' ');
+disp('_________________________________________________________');
+disp('___WELCOME TO ENCODER___');
+
+X = imread(input(' ENTER THE COVER IMAGE FILE NAME: ','S'));
+Y = imread(input(' ENTER THE FILE NAME OF IMAGE TO BE HIDDEN: ','S'));
+
+% CHECK COMPATIBILITY
+SX = size(X);
+SY = size(Y);
+if (SX(1) ~= SY(1))(SX(2)~=SY(2))
+X=imresize(X,[SY(1),SY(2)]);
+end
+
+
+%
+% CLEARING IST FILES LSB BITS & MOVING IIND FILES MSBITS BITS TO LSBITS
+X1 = bitand(X,uint8(240));
+Y1 = bitshift(Y,-4);
+
+% INSERTING IIND TO IST FILE
+Z=bitor(X1,Y1);
+
+% DISPLAY THE FIRST IMAGE
+figure(1)
+image(X);
+xlabel(' IST IMAGE ');
+
+
+% DISPLAY IIND IMAGE
+figure(2);
+image(Y);
+xlabel(' IIND IMAGE ');
+
+% DISPLAY ENCODED IMAGE
+figure(3);
+image(Z);
+xlabel(' ENCODED IMAGE ');
+% SAVING FILE
+SAV=input('DO YOU WANT TO SAVE THE FILE Y/N [Y] ','S');
+
+if SAV == 'Y'
+NAME=input('ENTER A NAME FOR THE ENCODED IMAGE: ','S');
+NAME=[NAME,'.BMP']; % CONCATINATION
+imwrite(Z,NAME);
+end
+
+close all;

@@ -1,0 +1,68 @@
+disp(' ');
+disp('_________________________________________________________');
+disp('___WELCOME TO ENCODER___');
+Z=imread(input('ENTER THE IMAGE FILE NAME TO BE DECODED:','S'));
+
+% XO IS FIST FILE- OBTAINED BY CLEARING LSB BITS, YO IS IIND FILE RIGHT
+% SHIFTING Z BY 4 BITS
+XO=bitand(Z,uint8(240));
+YO=bitshift(Z,4);
+
+% DISPLAY IST & IIND IMAGE FROM ENCODED IMAGE
+figure;
+image(YO);
+xlabel('IIND DECODED IMAGE');
+figure;
+image(XO);
+xlabel('IST DECODED IMAGE ');
+
+% SAVING FILE
+SAV=input('DO YOU WANT TO SAVE THE DECODED IMAGES Y/N [Y] ','S');
+
+
+if SAV == 'Y'
+NAME1=input('ENTER A NAME FOR THE DECODED IMAGE 1: ','S');
+NAME1=[NAME,'.JPG']; % CONCATINATION
+imwrite(XO,NAME1);
+
+
+NAME2=input('ENTER A NAME FOR THE DECODED SCRAMBLED IMAGE 2: ','S');
+NAME2=[NAME,'.JPG']; % CONCATINATION
+imwrite(YO,NAME2);
+end
+close all;
+
+
+% Recover the image, knowing the sort order
+a=imread(NAME2);%name of scrambled image obtained
+load('info2');
+recoverOrder = zeros([rows*columns], 2);
+recoverOrder(:, 1) = 1 : (rows*columns);
+load('info');
+recoverOrder(:, 2) = scrambleOrder;
+% Sort this to find out where each scrambled location needs to be sent to.
+newOrder = sortrows(recoverOrder, 2);
+% Extract just column 1, which is the order we need.
+newOrder = newOrder(:,1);
+
+
+
+% Unscramble according to the recoverOrder order.
+redChannel = redChannel(newOrder);
+greenChannel = greenChannel(newOrder);
+blueChannel = blueChannel(newOrder);
+% Reshape into a 2D image
+redChannel = reshape(redChannel, [rows, columns]);
+greenChannel = reshape(greenChannel, [rows, columns]);
+blueChannel = reshape(blueChannel, [rows, columns]);
+
+% Recombine separate color channels into a single, true color RGB image.
+scrambledImage = cat(3, redChannel, greenChannel, blueChannel);
+
+% Display the original color image.
+a=figure
+imshow(scrambledImage);
+saveas(a,'RetrievedQRCode.jpg');
+
+disp('The QR Code is save with name as "RetrievedQRCode" ');
+disp('It can be scanned now');
